@@ -1,7 +1,8 @@
 # CPU-only, reproducible image for the Streamlit text-style analyzer.
-# PaddleOCR 2.x's CPU inference runtime is most stable on the CPython 3.10
-# Linux wheel. The application itself remains usable with Python 3.11 on Windows.
-FROM python:3.10-slim
+# The official Paddle image includes the native CPU runtime required by
+# PaddleOCR. It avoids the PaddlePaddle binary initialization crash seen with
+# the generic Python slim image on GitHub-hosted Linux runners.
+FROM paddlepaddle/paddle:2.6.2
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -16,8 +17,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
-RUN python -m pip install --upgrade pip \
-    && python -m pip install --prefer-binary -r requirements.txt
+RUN sed '/^paddlepaddle==/d' requirements.txt > requirements.docker.txt \
+    && python -m pip install --upgrade pip \
+    && python -m pip install --prefer-binary -r requirements.docker.txt
 
 COPY text_style_analyzer/ ./text_style_analyzer/
 COPY docker/model_warmup.py ./docker/model_warmup.py
