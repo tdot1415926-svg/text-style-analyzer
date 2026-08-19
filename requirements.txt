@@ -2,6 +2,7 @@
 # albumentations dependency can select albucore/stringzilla, for which this
 # platform may need a local MSVC compiler.  These pins use published wheels.
 paddlepaddle==2.6.2
+protobuf==3.20.2
 paddleocr==2.7.3
 opencv-python==4.6.0.66
 numpy==1.26.4

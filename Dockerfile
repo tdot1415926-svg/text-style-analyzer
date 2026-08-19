@@ -1,5 +1,7 @@
 # CPU-only, reproducible image for the Streamlit text-style analyzer.
-FROM python:3.11-slim
+# PaddleOCR 2.x's CPU inference runtime is most stable on the CPython 3.10
+# Linux wheel. The application itself remains usable with Python 3.11 on Windows.
+FROM python:3.10-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
