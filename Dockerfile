@@ -24,8 +24,9 @@ RUN sed '/^paddlepaddle==/d' requirements.txt > requirements.docker.txt \
 COPY text_style_analyzer/ ./text_style_analyzer/
 COPY docker/model_warmup.py ./docker/model_warmup.py
 
-# Bake Chinese PP-OCR detector, recognizer and angle-classifier models into the
-# image. This makes the first request fast and avoids runtime model downloads.
+# Bake Chinese PP-OCR detector, recognizer and angle-classifier model files into
+# the image. The downloader intentionally does not initialize an OCR predictor:
+# GitHub-hosted build runners may not expose the CPU instructions it requires.
 RUN python docker/model_warmup.py
 
 COPY app.py ./

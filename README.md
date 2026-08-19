@@ -29,7 +29,7 @@ python cli.py path\to\image.png --json result.json --annotated result.png
 
 ## Docker
 
-镜像构建阶段会安装 CPU 依赖，并预下载中文 PP-OCRv4 的检测、识别和方向分类模型；容器启动后无需联网下载模型。
+镜像构建阶段会安装 CPU 依赖，并预下载中文 PP-OCRv4 的检测、识别和方向分类模型；容器启动后无需联网下载模型。PaddlePaddle CPU 推理需要支持 AVX 指令集的 x86-64 主机。
 
 ```powershell
 docker build -t text-style-analyzer:latest .
