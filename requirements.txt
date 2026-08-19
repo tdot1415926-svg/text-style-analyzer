@@ -1,0 +1,10 @@
+# A Windows / Python 3.11 compatible CPU stack.  PaddleOCR 2.10's unpinned
+# albumentations dependency can select albucore/stringzilla, for which this
+# platform may need a local MSVC compiler.  These pins use published wheels.
+paddlepaddle==2.6.2
+paddleocr==2.7.3
+opencv-python==4.6.0.66
+numpy==1.26.4
+Pillow==10.4.0
+streamlit==1.39.0
+pytest==8.3.3
