@@ -42,6 +42,12 @@ docker run --rm -p 8501:8501 text-style-analyzer:latest
 docker save -o text-style-analyzer.tar text-style-analyzer:latest
 ```
 
+推送到 GitHub 后，GitHub Actions 会构建并上传镜像至 GitHub Container Registry。构建成功后可拉取：
+
+```powershell
+docker pull ghcr.io/tdot1415926-svg/text-style-analyzer:latest
+```
+
 ## 输出说明
 
 `font_size_px` 以文字检测框的可见字符高度为基础计算，适合比较同一截图中不同文字的相对大小。`text_color` 和 `background_color` 为该文字框的主色估计；透明、渐变、描边字体的结果会标注为近似。
