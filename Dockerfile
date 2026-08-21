@@ -1,16 +1,20 @@
 # CPU-only, reproducible image for the Streamlit text-style analyzer.
+# Tesseract does not require PaddlePaddle or AVX instructions.
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PADDLEOCR_HOME=/opt/paddleocr
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# libgomp1 is needed by PaddlePaddle/OpenCV; libgl1 is used by OpenCV imports.
+# Include Chinese and English OCR data in the image, so first use is offline.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgomp1 libgl1 \
+    && apt-get install -y --no-install-recommends \
+        libgl1 \
+        tesseract-ocr \
+        tesseract-ocr-chi-sim \
+        tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
@@ -18,12 +22,6 @@ RUN python -m pip install --upgrade pip \
     && python -m pip install --prefer-binary -r requirements.txt
 
 COPY text_style_analyzer/ ./text_style_analyzer/
-COPY docker/model_warmup.py ./docker/model_warmup.py
-
-# Bake Chinese PP-OCR detector, recognizer and angle-classifier models into the
-# image. This makes the first request fast and avoids runtime model downloads.
-RUN python docker/model_warmup.py
-
 COPY app.py ./
 
 EXPOSE 8501
