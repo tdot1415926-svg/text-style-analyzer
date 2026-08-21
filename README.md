@@ -7,7 +7,7 @@
 - 文字所在区域的背景色（RGB、HEX）
 - 估算字号（像素）与文字框高度
 
-项目使用 [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) 进行中英文 OCR，使用 [OpenCV](https://github.com/opencv/opencv) 做颜色聚类和标注。颜色和字号是基于图片像素的估算值，不是原始 UI/CSS 字体属性；抗锯齿、渐变、阴影或复杂背景会降低准确度。
+项目使用 [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) 进行中英文 OCR，使用 [OpenCV](https://github.com/opencv/opencv) 做颜色聚类和标注。颜色和字号是基于图片像素的估算值，不是原始 UI/CSS 字体属性；抗锯齿、渐变、阴影或复杂背景会降低准确度。
 
 ## 安装与运行
 
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-第一次分析时 PaddleOCR 会下载其开源模型。若只需命令行：
+此外，请安装 Tesseract OCR，并安装简体中文语言数据（`chi_sim`）。Windows 可从 [UB Mannheim 的安装包](https://github.com/UB-Mannheim/tesseract/wiki) 安装；安装后需要重新打开终端，确保 `tesseract` 位于 PATH。若只需命令行：
 
 ```powershell
 python cli.py path\to\image.png --json result.json --annotated result.png
@@ -29,7 +29,7 @@ python cli.py path\to\image.png --json result.json --annotated result.png
 
 ## Docker
 
-镜像构建阶段会安装 CPU 依赖，并预下载中文 PP-OCRv4 的检测、识别和方向分类模型；容器启动后无需联网下载模型。PaddlePaddle CPU 推理需要支持 AVX 指令集的 x86-64 主机。
+镜像构建阶段会安装 Tesseract 及中文、英文识别数据；容器启动和首次分析都无需下载模型。该实现不依赖 PaddlePaddle 或 AVX 指令集。
 
 ```powershell
 docker build -t text-style-analyzer:latest .
@@ -45,7 +45,7 @@ docker save -o text-style-analyzer.tar text-style-analyzer:latest
 推送到 GitHub 后，GitHub Actions 会构建并上传镜像至 GitHub Container Registry。构建成功后可拉取：
 
 ```powershell
-docker pull ghcr.io/tdot1415926-svg/text-style-analyzer:latest
+docker pull ghcr.io/tdot1415926-svg/text-style-analyzer:agent-build-docker-image
 ```
 
 ## 输出说明

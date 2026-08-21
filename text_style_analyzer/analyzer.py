@@ -1,22 +1,14 @@
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Iterable
 
 import cv2
 import numpy as np
+import pytesseract
 from PIL import Image
+from pytesseract import Output
 
 from .models import Color, TextStyle
-
-
-@lru_cache(maxsize=1)
-def _ocr_engine():
-    # PaddleOCR 2.x API: Chinese and English are enabled by the `ch` model.
-    from paddleocr import PaddleOCR
-
-    return PaddleOCR(use_angle_cls=True, lang="ch", show_log=False)
-
 
 def _to_color(values: np.ndarray) -> Color:
     rgb = tuple(int(np.clip(round(float(v)), 0, 255)) for v in values)
@@ -78,19 +70,35 @@ def estimate_colors(image_rgb: np.ndarray, polygon: Iterable[Iterable[int]]) -> 
 class TextStyleAnalyzer:
     def analyze_pil(self, image: Image.Image, min_confidence: float = 0.5) -> list[TextStyle]:
         image_rgb = np.asarray(image.convert("RGB"))
-        # Paddle expects BGR ndarray and returns one result list per image.
-        raw = _ocr_engine().ocr(cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR), cls=True)
+        try:
+            raw = pytesseract.image_to_data(
+                image,
+                lang="chi_sim+eng",
+                config="--oem 1 --psm 11",
+                output_type=Output.DICT,
+            )
+        except pytesseract.TesseractNotFoundError as exc:
+            raise RuntimeError("未找到 Tesseract OCR。请安装 Tesseract 并配置到 PATH，或使用 Docker 镜像运行。") from exc
+
         items: list[TextStyle] = []
-        for line in (raw[0] if raw else []):
-            polygon = np.asarray(line[0], dtype=float)
-            text, confidence = line[1]
-            if float(confidence) < min_confidence or not str(text).strip():
+        for index, text in enumerate(raw["text"]):
+            value = str(text).strip()
+            try:
+                confidence = float(raw["conf"][index]) / 100
+            except (TypeError, ValueError):
                 continue
-            rounded_polygon = [(int(round(x)), int(round(y))) for x, y in polygon]
+            if confidence < min_confidence or not value:
+                continue
+            x, y = int(raw["left"][index]), int(raw["top"][index])
+            width, height_px = int(raw["width"][index]), int(raw["height"][index])
+            if width <= 0 or height_px <= 0:
+                continue
+            rounded_polygon = [(x, y), (x + width, y), (x + width, y + height_px), (x, y + height_px)]
+            polygon = np.asarray(rounded_polygon, dtype=float)
             text_color, background_color = estimate_colors(image_rgb, rounded_polygon)
             height = _box_height(polygon)
             # OCR boxes enclose visible glyphs; 0.95 makes the number closer to
             # conventional raster font pixel size without pretending it is exact.
             font_size = max(1, int(round(height * 0.95)))
-            items.append(TextStyle(str(text), float(confidence), rounded_polygon, text_color, background_color, font_size, round(height, 2)))
+            items.append(TextStyle(value, confidence, rounded_polygon, text_color, background_color, font_size, round(height, 2)))
         return items
